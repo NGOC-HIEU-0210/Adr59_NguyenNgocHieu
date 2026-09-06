@@ -1,0 +1,84 @@
+# =========================
+# Android / Gradle
+# =========================
+
+**/.gradle/
+**/build/
+**/captures/
+**/.externalNativeBuild/
+**/.cxx/
+**/out/
+
+# Local configuration
+**/local.properties
+
+# Generated files
+**/generated/
+
+# APK / AAB
+**/*.apk
+**/*.aab
+**/*.ap_
+**/*.aar
+
+# Dex / Class
+**/*.dex
+**/*.class
+
+# Native
+**/*.so
+
+# Keystore
+**/*.jks
+**/*.keystore
+**/*.p12
+
+# =========================
+# Android Studio / IntelliJ
+# =========================
+
+.idea/
+**/.idea/
+**/.idea/caches
+**/.idea/libraries
+**/.idea/modules.xml
+**/.idea/workspace.xml
+**/.idea/navEditor.xml
+**/.idea/assetWizardSettings.xml
+
+*.iml
+
+
+# =========================
+# Kotlin
+# =========================
+
+**/.kotlin/
+
+# =========================
+# Logs
+# =========================
+
+*.log
+
+# =========================
+# OS files
+# =========================
+
+.DS_Store
+Thumbs.db
+
+# =========================
+# VS Code
+# =========================
+
+.vscode/
+
+# =========================
+# Temporary files
+# =========================
+
+*.tmp
+*.bak
+*.swp
+*.orig
