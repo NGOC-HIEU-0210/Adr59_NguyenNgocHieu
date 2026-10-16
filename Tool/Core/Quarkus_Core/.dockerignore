@@ -1,0 +1,8 @@
+target/
+.git
+.idea
+.vscode
+*.zip
+*.md
+test_math.png
+headers.txt

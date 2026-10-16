@@ -82,3 +82,14 @@ Thumbs.db
 *.bak
 *.swp
 *.orig
+
+# =========================
+# Secrets / Environment
+# =========================
+
+.env
+**/.env
+.env.*
+**/.env.*
+!.env.example
+!**/.env.example
