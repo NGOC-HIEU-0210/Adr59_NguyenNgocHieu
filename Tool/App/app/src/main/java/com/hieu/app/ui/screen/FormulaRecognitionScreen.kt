@@ -72,6 +72,8 @@ fun FormulaRecognitionScreen(
     viewModel: FormulaViewModel,
     onOpenSettings: () -> Unit,
     onOpenGraphTools: () -> Unit,
+    onOpenSolve: () -> Unit,
+    onOpenPlotGuide: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -244,13 +246,14 @@ fun FormulaRecognitionScreen(
                 RecognitionResultPanel(
                     formulas = state.formulas,
                     onFormulasChange = viewModel::updateFormulas,
-                    onPlotClick = viewModel::plotGraph
+                    onPlotClick = onOpenPlotGuide,
+                    onSolveClick = onOpenSolve
                 )
             }
 
-            //  Đồ thị xem nhanh
+            // Đồ thị: tự hiện ngay khi có ít nhất 1 công thức (1 hàm số cũng vẽ)
             AnimatedVisibility(
-                visible = state.showGraph,
+                visible = state.formulas.any { it.isNotBlank() },
                 enter = fadeIn(tween(150)),
                 exit = fadeOut(tween(100))
             ) {

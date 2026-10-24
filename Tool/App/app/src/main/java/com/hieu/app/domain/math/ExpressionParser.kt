@@ -193,3 +193,73 @@ private fun tokenize(s: String): List<String> {
     }
     return tokens
 }
+
+
+// ---------------------------------------------------------------------------------------------
+// Phân loại công thức + trích đa thức (dùng cho phần giải toán từng bước)
+// ---------------------------------------------------------------------------------------------
+
+sealed interface ParsedFormula {
+
+    data class AsFunction(val expr: Expr) : ParsedFormula
+
+    data class AsEquation(val left: Expr, val right: Expr) : ParsedFormula
+}
+
+private val FUNCTION_LHS = Regex("^(y|[a-z]\\(x\\))$")
+
+fun classifyFormula(raw: String): ParsedFormula {
+    val s = raw.trim().lowercase().replace(Regex("\\s+"), "")
+    val parts = s.split("=")
+    if (parts.size != 2) return ParsedFormula.AsFunction(parseFormula(raw))
+    val (left, right) = parts
+    if (left.isEmpty() || FUNCTION_LHS.matches(left)) {
+        return ParsedFormula.AsFunction(parseFormula(right))
+    }
+    return ParsedFormula.AsEquation(parseFormula(left), parseFormula(right))
+}
+
+/** Giá trị hằng nếu biểu thức không chứa x, ngược lại null. */
+private fun Expr.constValue(): Double? = when (this) {
+    is Num -> v
+    is ConstPi -> Math.PI
+    is VarX -> null
+    is Neg -> e.constValue()?.let { -it }
+    is BinOp -> if (l.constValue() != null && r.constValue() != null) eval(0.0) else null
+    is Call -> if (arg.constValue() != null) eval(0.0) else null
+}
+
+/**
+ * Nếu biểu thức là đa thức theo x thì trả về đa thức đó, ngược lại null
+ * (ví dụ có sin(x), sqrt(x), 2^x, chia cho x...).
+ */
+fun Expr.toPoly(): Poly? {
+    val p = toPolyOrNull() ?: return null
+    return if (p.c.all { it.isFinite() }) p else null
+}
+
+private fun Expr.toPolyOrNull(): Poly? = when (this) {
+    is Num -> Poly.constant(v)
+    is ConstPi -> Poly.constant(Math.PI)
+    is VarX -> Poly(doubleArrayOf(0.0, 1.0))
+    is Neg -> e.toPolyOrNull()?.let { -it }
+    is Call -> if (arg.constValue() != null) Poly.constant(eval(0.0)) else null
+    is BinOp -> {
+        val a = l.toPolyOrNull()
+        val b = r.toPolyOrNull()
+        when (op) {
+            '+' -> if (a != null && b != null) a + b else null
+            '-' -> if (a != null && b != null) a - b else null
+            '*' -> if (a != null && b != null) a * b else null
+            '/' -> {
+                val d = r.constValue()
+                if (a != null && d != null && d != 0.0) a.scale(1.0 / d) else null
+            }
+            '^' -> {
+                val n = r.constValue()
+                if (a != null && n != null && n >= 0.0 && n == Math.floor(n) && n <= 12.0) a.pow(n.toInt()) else null
+            }
+            else -> null
+        }
+    }
+}

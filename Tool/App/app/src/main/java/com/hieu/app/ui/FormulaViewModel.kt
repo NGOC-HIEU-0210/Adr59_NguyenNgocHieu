@@ -35,8 +35,7 @@ data class FormulaUiState(
     // Kết quả
     val formulas: List<String> = emptyList(),
     val isRecognizing: Boolean = false,
-    val error: RecognitionError? = null,
-    val showGraph: Boolean = false
+    val error: RecognitionError? = null
 ) {
     val canRecognize: Boolean
         get() = !isRecognizing &&
@@ -103,16 +102,12 @@ class FormulaViewModel : ViewModel() {
     // Kết quả
 
     fun updateFormulas(formulas: List<String>) {
-        _uiState.update { it.copy(formulas = formulas, showGraph = false) }
-    }
-
-    fun plotGraph() {
-        _uiState.update { it.copy(showGraph = true) }
+        _uiState.update { it.copy(formulas = formulas) }
     }
 
 
     private fun resetResults() {
-        _uiState.update { it.copy(formulas = emptyList(), showGraph = false, error = null) }
+        _uiState.update { it.copy(formulas = emptyList(), error = null) }
     }
 
     // Gọi server
@@ -126,7 +121,7 @@ class FormulaViewModel : ViewModel() {
             state.imageBitmap
         } ?: return
 
-        _uiState.update { it.copy(isRecognizing = true, error = null, showGraph = false) }
+        _uiState.update { it.copy(isRecognizing = true, error = null) }
 
 
         viewModelScope.launch {

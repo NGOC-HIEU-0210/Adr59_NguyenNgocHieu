@@ -1,5 +1,11 @@
 package com.hieu.app.ui.screen
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -19,6 +25,8 @@ import androidx.compose.material.icons.filled.CenterFocusStrong
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.OpenWith
+import androidx.compose.material.icons.filled.SaveAlt
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.filled.ZoomOut
 import androidx.compose.material3.Card
@@ -41,10 +49,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -53,6 +64,7 @@ import com.hieu.app.ui.components.GraphErrorList
 import com.hieu.app.ui.components.VIEW_HALF_RANGE
 import com.hieu.app.ui.components.drawGraphScene
 import com.hieu.app.ui.components.rememberGraphData
+import com.hieu.app.ui.components.renderGraphBitmap
 import com.hieu.app.ui.i18n.AppStrings
 import com.hieu.app.ui.theme.BorderSoft
 import com.hieu.app.ui.theme.BorderStrong
@@ -64,6 +76,9 @@ import com.hieu.app.ui.theme.PadBg
 import com.hieu.app.ui.theme.TextMuted
 import com.hieu.app.ui.theme.TextSecondary
 import com.hieu.app.ui.theme.TitleDark
+import androidx.core.content.ContextCompat
+import com.hieu.app.util.saveBitmapToGallery
+import com.hieu.app.util.shareBitmap
 import kotlin.math.hypot
 
 
@@ -90,6 +105,38 @@ private val PenColors = listOf(
 private const val MIN_ZOOM = 0.25f
 private const val MAX_ZOOM = 8f
 
+/**
+ * Vẽ các nét bút ghi chú lên đồ thị. Dùng chung cho màn hình và khi xuất PNG
+ * để ảnh xuất ra giống hệt những gì người dùng đang thấy.
+ */
+fun DrawScope.drawAnnotations(strokes: List<AnnotationStroke>, pan: Offset, zoom: Float) {
+    val scale = (size.width / (VIEW_HALF_RANGE.toFloat() * 2f)) * zoom
+    val ox = size.width / 2f + pan.x
+    val oy = size.height / 2f + pan.y
+
+    fun screenOf(p: Offset) = Offset(ox + p.x * scale, oy - p.y * scale)
+
+    strokes.forEach { stroke ->
+        if (stroke.points.size < 2) return@forEach
+        val path = Path()
+        val first = screenOf(stroke.points[0])
+        path.moveTo(first.x, first.y)
+        stroke.points.drop(1).forEach { p ->
+            val sp = screenOf(p)
+            path.lineTo(sp.x, sp.y)
+        }
+        drawPath(
+            path = path,
+            color = if (stroke.highlighter) stroke.color.copy(alpha = 0.32f) else stroke.color,
+            style = Stroke(
+                width = stroke.width * zoom * (if (stroke.highlighter) 3.5f else 1f),
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round
+            )
+        )
+    }
+}
+
 
 @Composable
 fun GraphToolsScreen(
@@ -110,6 +157,51 @@ fun GraphToolsScreen(
     var pan by remember { mutableStateOf(Offset.Zero) }
     var zoom by remember { mutableStateOf(1f) }
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
+
+    // ---- Xuat PNG ----
+    val context = LocalContext.current
+    val density = LocalDensity.current
+
+    fun buildExportBitmap() =
+        if (canvasSize.width <= 0 || canvasSize.height <= 0) null
+        else runCatching {
+            renderGraphBitmap(
+                curves = graphData.curves,
+                strokes = strokes,
+                pan = pan,
+                zoom = zoom,
+                widthPx = canvasSize.width,
+                heightPx = canvasSize.height,
+                density = density
+            )
+        }.getOrNull()
+
+    fun saveToGallery() {
+        val bitmap = buildExportBitmap()
+        val ok = bitmap != null && saveBitmapToGallery(context, bitmap)
+        Toast.makeText(context, if (ok) strings.exportSaved else strings.exportFailed, Toast.LENGTH_LONG).show()
+    }
+
+    val storagePermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) saveToGallery()
+        else Toast.makeText(context, strings.exportNeedPermission, Toast.LENGTH_LONG).show()
+    }
+
+    fun onSaveClick() {
+        val needsPermission = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+            PackageManager.PERMISSION_GRANTED
+        if (needsPermission) storagePermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        else saveToGallery()
+    }
+
+    fun onShareClick() {
+        val bitmap = buildExportBitmap()
+        val ok = bitmap != null && shareBitmap(context, bitmap, strings.shareChooserTitle)
+        if (!ok) Toast.makeText(context, strings.exportFailed, Toast.LENGTH_LONG).show()
+    }
 
     fun pxPerUnit(): Float =
         (canvasSize.width / (VIEW_HALF_RANGE.toFloat() * 2f)) * zoom
@@ -252,12 +344,6 @@ fun GraphToolsScreen(
 
                     // Lop net ve tay nam tren do thi
                     Canvas(modifier = Modifier.fillMaxSize()) {
-                        val scale = (size.width / (VIEW_HALF_RANGE.toFloat() * 2f)) * zoom
-                        val ox = size.width / 2f + pan.x
-                        val oy = size.height / 2f + pan.y
-
-                        fun screenOf(p: Offset) = Offset(ox + p.x * scale, oy - p.y * scale)
-
                         val live = if (currentStroke.size > 1) {
                             listOf(
                                 AnnotationStroke(
@@ -266,26 +352,7 @@ fun GraphToolsScreen(
                                 )
                             )
                         } else emptyList()
-
-                        (strokes + live).forEach { stroke ->
-                            if (stroke.points.size < 2) return@forEach
-                            val path = Path()
-                            val first = screenOf(stroke.points[0])
-                            path.moveTo(first.x, first.y)
-                            stroke.points.drop(1).forEach { p ->
-                                val s = screenOf(p)
-                                path.lineTo(s.x, s.y)
-                            }
-                            drawPath(
-                                path = path,
-                                color = if (stroke.highlighter) stroke.color.copy(alpha = 0.32f) else stroke.color,
-                                style = Stroke(
-                                    width = stroke.width * zoom * (if (stroke.highlighter) 3.5f else 1f),
-                                    cap = StrokeCap.Round,
-                                    join = StrokeJoin.Round
-                                )
-                            )
-                        }
+                        drawAnnotations(strokes + live, pan, zoom)
                     }
                   }
 
@@ -428,6 +495,27 @@ fun GraphToolsScreen(
                         strokes = emptyList()
                         currentStroke = emptyList()
                     }
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                //  Xuat PNG / Chia se
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    com.hieu.app.ui.components.OutlinedActionButton(
+                        text = strings.exportPng,
+                        icon = Icons.Filled.SaveAlt,
+                        modifier = Modifier.weight(1f),
+                        onClick = ::onSaveClick
+                    )
+                    com.hieu.app.ui.components.OutlinedActionButton(
+                        text = strings.sharePng,
+                        icon = Icons.Filled.Share,
+                        modifier = Modifier.weight(1f),
+                        onClick = ::onShareClick
+                    )
                 }
             }
         }

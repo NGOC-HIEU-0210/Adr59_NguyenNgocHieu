@@ -21,13 +21,17 @@ import com.hieu.app.ui.i18n.LocalAppStrings
 import com.hieu.app.ui.i18n.Vietnamese
 import com.hieu.app.ui.screen.FormulaRecognitionScreen
 import com.hieu.app.ui.screen.GraphToolsScreen
+import com.hieu.app.ui.screen.PlotGuideScreen
 import com.hieu.app.ui.screen.SettingsScreen
+import com.hieu.app.ui.screen.SolveScreen
 
 
 object Routes {
     const val MAIN = "main"
     const val SETTINGS = "settings"
     const val GRAPH = "graph"
+    const val SOLVE = "solve"
+    const val PLOT_GUIDE = "plot_guide"
 }
 
 @Composable
@@ -54,7 +58,9 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     FormulaRecognitionScreen(
                         viewModel = viewModel,
                         onOpenSettings = { navController.navigateSingleTop(Routes.SETTINGS) },
-                        onOpenGraphTools = { navController.navigateSingleTop(Routes.GRAPH) }
+                        onOpenGraphTools = { navController.navigateSingleTop(Routes.GRAPH) },
+                        onOpenSolve = { navController.navigateSingleTop(Routes.SOLVE) },
+                        onOpenPlotGuide = { navController.navigateSingleTop(Routes.PLOT_GUIDE) }
                     )
                 }
                 composable(Routes.SETTINGS) {
@@ -62,6 +68,22 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                         strings = strings,
                         currentLanguage = state.language,
                         onLanguageSelected = viewModel::setLanguage,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable(Routes.SOLVE) {
+                    SolveScreen(
+                        formulas = state.formulas,
+                        language = state.language,
+                        strings = strings,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable(Routes.PLOT_GUIDE) {
+                    PlotGuideScreen(
+                        formulas = state.formulas,
+                        language = state.language,
+                        strings = strings,
                         onBack = { navController.popBackStack() }
                     )
                 }

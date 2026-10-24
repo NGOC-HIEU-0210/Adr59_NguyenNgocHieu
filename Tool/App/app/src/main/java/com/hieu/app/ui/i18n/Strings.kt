@@ -51,7 +51,27 @@ data class AppStrings(
     val zoomOut: String,
     val zoomLabel: String,
     val resetView: String,
-    val noFormulaToPlot: String
+    val noFormulaToPlot: String,
+
+    // Giai toan
+    val solveAction: String,
+    val solveScreenTitle: String,
+    val solveNoFormula: String,
+    val solveSystemAction: String,
+    val solveNeedTwoFunctions: String,
+    val plotGuideAction: String,
+    val plotGuideScreenTitle: String,
+    val plotGuideNoFormula: String,
+    val stepLabel: String,
+    val conclusionLabel: String,
+
+    // Xuat do thi thanh PNG
+    val exportPng: String,
+    val sharePng: String,
+    val exportSaved: String,
+    val exportFailed: String,
+    val exportNeedPermission: String,
+    val shareChooserTitle: String
 )
 
 val Vietnamese = AppStrings(
@@ -99,7 +119,25 @@ val Vietnamese = AppStrings(
     zoomOut = "Thu nhỏ",
     zoomLabel = "Tỉ lệ",
     resetView = "Đặt lại khung nhìn",
-    noFormulaToPlot = "Chưa có công thức nào để vẽ."
+    noFormulaToPlot = "Chưa có công thức nào để vẽ.",
+
+    solveAction = "Giải hệ phương trình",
+    solveScreenTitle = "Giải hệ phương trình",
+    solveNoFormula = "Chưa có công thức nào để giải.",
+    solveSystemAction = "Giải hệ phương trình",
+    solveNeedTwoFunctions = "Cần ít nhất 2 hàm số y = f(x) để giải hệ phương trình.",
+    plotGuideAction = "Cách vẽ đồ thị",
+    plotGuideScreenTitle = "Cách vẽ đồ thị",
+    plotGuideNoFormula = "Chưa có hàm số nào để vẽ.",
+    stepLabel = "Bước",
+    conclusionLabel = "Kết luận",
+
+    exportPng = "Lưu PNG",
+    sharePng = "Chia sẻ",
+    exportSaved = "Đã lưu ảnh vào thư viện (Pictures/VietCongThuc)",
+    exportFailed = "Không xuất được ảnh",
+    exportNeedPermission = "Cần cấp quyền lưu ảnh để xuất đồ thị",
+    shareChooserTitle = "Chia sẻ đồ thị"
 )
 
 val English = AppStrings(
@@ -147,7 +185,25 @@ val English = AppStrings(
     zoomOut = "Zoom out",
     zoomLabel = "Scale",
     resetView = "Reset view",
-    noFormulaToPlot = "No formula to plot yet."
+    noFormulaToPlot = "No formula to plot yet.",
+
+    solveAction = "Solve system",
+    solveScreenTitle = "Solve system of equations",
+    solveNoFormula = "No formula to solve yet.",
+    solveSystemAction = "Solve system",
+    solveNeedTwoFunctions = "At least 2 functions y = f(x) are needed to solve a system.",
+    plotGuideAction = "How to plot",
+    plotGuideScreenTitle = "How to plot the graph",
+    plotGuideNoFormula = "No function to plot yet.",
+    stepLabel = "Step",
+    conclusionLabel = "Conclusion",
+
+    exportPng = "Save PNG",
+    sharePng = "Share",
+    exportSaved = "Image saved to your gallery (Pictures/VietCongThuc)",
+    exportFailed = "Couldn't export the image",
+    exportNeedPermission = "Storage permission is needed to export the graph",
+    shareChooserTitle = "Share graph"
 )
 
 
